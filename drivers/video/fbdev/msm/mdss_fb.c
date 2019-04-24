@@ -49,6 +49,7 @@
 #include <sync.h>
 #include <sw_sync.h>
 
+#include "mdss_dsi.h"
 #include "mdss_fb.h"
 #include "mdss_mdp_splash_logo.h"
 #define CREATE_TRACE_POINTS
@@ -132,6 +133,9 @@ static inline uint64_t __user to_user_u64(void *ptr)
 {
 	return (uint64_t)((uintptr_t)ptr);
 }
+
+static struct fb_info *prim_fbi;
+static atomic_t prim_panel_is_on;
 
 void mdss_fb_no_update_notify_timer_cb(unsigned long data)
 {
@@ -522,7 +526,6 @@ static void __mdss_fb_idle_notify_work(struct work_struct *work)
 		sysfs_notify(&mfd->fbi->dev->kobj, NULL, "idle_notify");
 	mfd->idle_state = MDSS_FB_IDLE;
 }
-
 
 static ssize_t mdss_fb_get_fps_info(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -1430,7 +1433,9 @@ static int mdss_fb_remove(struct platform_device *pdev)
 
 	if (!mfd)
 		return -ENODEV;
-
+	if (mfd->panel_info && mfd->panel_info->is_prim_panel) {
+		atomic_set(&prim_panel_is_on, false);
+	}
 	mdss_fb_remove_sysfs(mfd);
 
 	pm_runtime_disable(mfd->fbi->dev);
@@ -2096,6 +2101,11 @@ static int mdss_fb_blank(int blank_mode, struct fb_info *info)
 	struct mdss_panel_data *pdata;
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 
+	if ((info == prim_fbi) && (blank_mode == FB_BLANK_UNBLANK) &&
+		atomic_read(&prim_panel_is_on)) {
+		atomic_set(&prim_panel_is_on, false);
+		return 0;
+	}
 	ret = mdss_fb_pan_idle(mfd);
 	if (ret) {
 		pr_warn("mdss_fb_pan_idle for fb%d failed. ret=%d\n",
@@ -2765,6 +2775,10 @@ static int mdss_fb_register(struct msm_fb_data_type *mfd)
 	pr_info("FrameBuffer[%d] %dx%d registered successfully!\n", mfd->index,
 					fbi->var.xres, fbi->var.yres);
 
+	if (panel_info->is_prim_panel) {
+		prim_fbi = fbi;
+		atomic_set(&prim_panel_is_on, false);
+	}
 	return 0;
 }
 
