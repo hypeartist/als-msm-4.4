@@ -184,8 +184,8 @@ endif
 dtb-$(CONFIG_ARCH_MSMHAMSTER) += msmhamster-rumi.dtb
 
 ifeq ($(CONFIG_KERNEL_CUSTOM_D2S),y)
-dtb-$(CONFIG_ARCH_SDM660) += sdm660-mtp-d2s-overlay.dtb \
-	sdm660-mtp-d2s-ab-overlay.dtb
+dtb-$(CONFIG_ARCH_SDM660) += sdm660-mtp-d2s-overlay.dtb
+# 	sdm660-mtp-d2s-ab-overlay.dtb
 else
 dtb-$(CONFIG_ARCH_SDM660) += sdm660-sim.dtb \
 	sdm660-internal-codec-cdp.dtb \
