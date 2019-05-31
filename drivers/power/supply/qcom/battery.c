@@ -10,7 +10,8 @@
  * GNU General Public License for more details.
  */
 
-#define pr_fmt(fmt) "QCOM-BATT: %s: " fmt, __func__
+// #define pr_fmt(fmt) "QCOM-BATT: %s: " fmt, __func__
+#define pr_fmt(fmt)
 
 #include <linux/device.h>
 #include <linux/delay.h>

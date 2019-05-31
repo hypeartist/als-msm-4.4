@@ -35,10 +35,11 @@ extern int hwc_check_global;
 #endif
 
 #define smblib_err(chg, fmt, ...)
+#define smblib_err_0(str, ...)
 #define smblib_dbg(chg, reason, fmt, ...)
 
 // #define smblib_err(chg, fmt, ...)		\
-// 	pr_err("%s: %s: " fmt, chg->name,	\
+// 	smblib_err("%s: %s: " fmt, chg->name,	\
 // 		__func__, ##__VA_ARGS__)	\
 
 // #define smblib_dbg(chg, reason, fmt, ...)			\
@@ -320,7 +321,7 @@ int smblib_set_chg_freq(struct smb_chg_param *param,
 			break;
 	}
 	if (i == ARRAY_SIZE(chg_freq_list)) {
-		pr_err("Invalid frequency %d Hz\n", val_u / 2);
+		smblib_err("Invalid frequency %d Hz\n", val_u / 2);
 		return -EINVAL;
 	}
 
@@ -368,15 +369,15 @@ static int smblib_adjust_jeita_cc_config(struct smb_charger *chg, int val_u)
 	int current_cc_minus_ua = 0;
 
 
-	pr_err("smblib_adjust_jeita_cc_config fcc val_u  = %d\n", val_u);
+	smblib_err("smblib_adjust_jeita_cc_config fcc val_u  = %d\n", val_u);
 
 	rc = smblib_get_charge_param(chg,  &chg->param.jeita_cc_comp,  &current_cc_minus_ua);
-	pr_err("lct smblib_adjust_jeita_cc_config jeita cc current_cc_minus_ua = %d\n", current_cc_minus_ua);
+	smblib_err("lct smblib_adjust_jeita_cc_config jeita cc current_cc_minus_ua = %d\n", current_cc_minus_ua);
 
 	if ((val_u == chg->batt_profile_fcc_ua) && (current_cc_minus_ua != JEITA_CC_COMP_CFG_IN_UEFI * 1000))
 	{
 		rc = smblib_set_charge_param(chg, &chg->param.jeita_cc_comp, JEITA_CC_COMP_CFG_IN_UEFI * 1000);
-		pr_err("smblib_adjust_jeita_cc_config jeita cc has changed ,write it back ,write result = %d\n", rc);
+		smblib_err("smblib_adjust_jeita_cc_config jeita cc has changed ,write it back ,write result = %d\n", rc);
 
 	}
 	else if ((val_u < chg->batt_profile_fcc_ua) && ((chg->batt_profile_fcc_ua - val_u) <= JEITA_CC_COMP_CFG_IN_UEFI * 1000))
@@ -385,22 +386,22 @@ static int smblib_adjust_jeita_cc_config(struct smb_charger *chg, int val_u)
 		{
 			current_cc_minus_ua = JEITA_CC_COMP_CFG_IN_UEFI * 1000 - (chg->batt_profile_fcc_ua - val_u);
 			rc = smblib_set_charge_param(chg, &chg->param.jeita_cc_comp, current_cc_minus_ua);
-			pr_err("smblib_adjust_jeita_cc_config jeita cc need to decrease to %d,write result = %d\n", current_cc_minus_ua, rc);
+			smblib_err("smblib_adjust_jeita_cc_config jeita cc need to decrease to %d,write result = %d\n", current_cc_minus_ua, rc);
 		}
 		else
 		{
-			pr_err("smblib_adjust_jeita_cc_config jeita cc have decreased \n");
+			smblib_err("smblib_adjust_jeita_cc_config jeita cc have decreased \n");
 		}
 
 	}
 	else if ((val_u < chg->batt_profile_fcc_ua) && ((chg->batt_profile_fcc_ua - val_u) > JEITA_CC_COMP_CFG_IN_UEFI * 1000))
 	{
 		rc = smblib_set_charge_param(chg, &chg->param.jeita_cc_comp, 0);
-		pr_err("smblib_adjust_jeita_cc_config jeita need to set to zero,write result = %d\n", rc);
+		smblib_err("smblib_adjust_jeita_cc_config jeita need to set to zero,write result = %d\n", rc);
 	}
 	else
 	{
-		pr_err("smblib_adjust_jeita_cc_config do nothing \n");
+		smblib_err("smblib_adjust_jeita_cc_config do nothing \n");
 	}
 
 
@@ -840,7 +841,7 @@ static int smblib_get_hw_pulse_cnt(struct smb_charger *chg, int *count)
 	case PMI8998_SUBTYPE:
 		rc = smblib_read(chg, QC_PULSE_COUNT_STATUS_REG, val);
 		if (rc) {
-			pr_err("failed to read QC_PULSE_COUNT_STATUS_REG rc=%d\n",
+			smblib_err("failed to read QC_PULSE_COUNT_STATUS_REG rc=%d\n",
 					rc);
 			return rc;
 		}
@@ -850,7 +851,7 @@ static int smblib_get_hw_pulse_cnt(struct smb_charger *chg, int *count)
 		rc = smblib_multibyte_read(chg,
 				QC_PULSE_COUNT_STATUS_1_REG, val, 2);
 		if (rc) {
-			pr_err("failed to read QC_PULSE_COUNT_STATUS_1_REG rc=%d\n",
+			smblib_err("failed to read QC_PULSE_COUNT_STATUS_1_REG rc=%d\n",
 					rc);
 			return rc;
 		}
@@ -1258,7 +1259,7 @@ static int smblib_hvdcp_hw_inov_dis_vote_callback(struct votable *votable,
 		 */
 		rc = smblib_get_hw_pulse_cnt(chg, &chg->pulse_cnt);
 		if (rc < 0) {
-			pr_err("failed to read QC_PULSE_COUNT_STATUS_REG rc=%d\n",
+			smblib_err("failed to read QC_PULSE_COUNT_STATUS_REG rc=%d\n",
 					rc);
 			return rc;
 		}
@@ -1957,7 +1958,7 @@ int lct_set_prop_input_suspend(struct smb_charger *chg,
 	int rc = 0;
 	union power_supply_propval pval = {0, };
 
-	pr_err("[%s] val=%d\n", __func__, val->intval);
+	smblib_err("[%s] val=%d\n", __func__, val->intval);
 	if (val->intval) {
 		pval.intval = 0;
 		smblib_set_prop_input_suspend(chg, &pval);
@@ -2007,7 +2008,7 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 		return -EINVAL;
 
 	#ifdef THERMAL_CONFIG_FB
-	pr_err("smblib_set_prop_system_temp_level val=%d, chg->system_temp_level=%d, LctThermal=%d, lct_backlight_off= %d, IsInCall=%d, hwc_check_india=%d\n ",
+	smblib_err("smblib_set_prop_system_temp_level val=%d, chg->system_temp_level=%d, LctThermal=%d, lct_backlight_off= %d, IsInCall=%d, hwc_check_india=%d\n ",
 		val->intval, chg->system_temp_level, LctThermal, lct_backlight_off, LctIsInCall, hwc_check_india);
 
 	if (LctThermal == 0) {
@@ -2097,10 +2098,10 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 	vote(chg->chg_disable_votable, THERMAL_DAEMON_VOTER, false, 0);
 	if (chg->system_temp_level == 0) {
 		return vote(chg->fcc_votable, THERMAL_DAEMON_VOTER, false, 0);
-		pr_err("lct smblib_set_prop_system_temp_level 0 false fcc_votable\n");
+		smblib_err_0("lct smblib_set_prop_system_temp_level 0 false fcc_votable\n");
 	}
 
-	pr_err("lct smblib_set_prop_system_temp_level >0 fcc_votable\n");
+	smblib_err_0("lct smblib_set_prop_system_temp_level >0 fcc_votable\n");
 
 	vote(chg->fcc_votable, THERMAL_DAEMON_VOTER, true,
 			chg->thermal_mitigation[chg->system_temp_level]);
@@ -2268,17 +2269,17 @@ int smblib_dp_dm(struct smb_charger *chg, int val)
 	case POWER_SUPPLY_DP_DM_FORCE_5V:
 		rc = smblib_force_vbus_voltage(chg, FORCE_5V_BIT);
 		if (rc < 0)
-			pr_err("Failed to force 5V\n");
+			smblib_err_0("Failed to force 5V\n");
 		break;
 	case POWER_SUPPLY_DP_DM_FORCE_9V:
 		rc = smblib_force_vbus_voltage(chg, FORCE_9V_BIT);
 		if (rc < 0)
-			pr_err("Failed to force 9V\n");
+			smblib_err_0("Failed to force 9V\n");
 		break;
 	case POWER_SUPPLY_DP_DM_FORCE_12V:
 		rc = smblib_force_vbus_voltage(chg, FORCE_12V_BIT);
 		if (rc < 0)
-			pr_err("Failed to force 12V\n");
+			smblib_err_0("Failed to force 12V\n");
 		break;
 	case POWER_SUPPLY_DP_DM_ICL_UP:
 	default:
